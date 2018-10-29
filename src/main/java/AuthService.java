@@ -18,27 +18,22 @@ public class AuthService {
     public AuthService(){
         MongoClient mongoClient = new MongoClient("localhost", 27017);
         db = mongoClient.getDatabase("REST2");
+
         authCollection = db.getCollection("auth");
     }
 
 
-    public String creatSession(String userID){
+ public String creatSession(String userID) {
         Date timeStamp = new Date();
-        System.out.println(timeStamp);
-        String token = generateHash(timeStamp.toString());
-        System.out.println(token);
-        Document newSession = new Document("_id",userID).append("token",token).append("timestamp",timeStamp);
-        return token;
-    }
-
-    private String generateHash(String time){
-        try{
-            MessageDigest mDigest = MessageDigest.getInstance("SHA-1");
-            byte[] result = mDigest.digest(time.getBytes());
-            return Base64.getEncoder().encodeToString(result);
-        }catch(Exception e){
-            return "Fail on generating Hash";
+        Document existingSession = authCollection.find(eq("_id", userID)).first();
+        if (existingSession == null) {
+            Document newSession = new Document("_id", userID).append("timestamp", timeStamp);
+            authCollection.insertOne(newSession);
+        } else {
+            Document updateSession = new Document("$set", new Document("_id", userID).append("timestamp", timeStamp));
+            authCollection.updateOne(existingSession, updateSession);
         }
+        return userID;
     }
 
     public Document findOwner(String token) {
