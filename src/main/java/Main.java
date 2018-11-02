@@ -1,4 +1,5 @@
-
+package main.java;
+import main.java.AuthService;
 import org.bson.Document;
 import static spark.Spark.*;
 
